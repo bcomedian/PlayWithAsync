@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PlayWithAsync"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="480" Width="850">
     <Window.Resources>
         <ResourceDictionary>
             <Style TargetType="Button">
                 <Setter Property="Margin" Value="5" />
-                <Setter Property="Width" Value="120" />
+                <Setter Property="Width" Value="135" />
                 <Setter Property="Height" Value="32" />
             </Style>
             
@@ -20,20 +20,77 @@
                 <Setter Property="Height" Value="32" />
                 <Setter Property="Stretch" Value="UniformToFill" />
             </Style>
+            
+            <Style TargetType="Border">
+                <Setter Property="BorderThickness" Value="2" />
+                <Setter Property="BorderBrush" Value="Gray" />
+                <Setter Property="CornerRadius" Value="5" />
+                <Setter Property="Margin" Value="3" />
+            </Style>
+            
+            <Style TargetType="Label">
+                <Setter Property="Margin" Value="0,0,5,0" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Foreground" Value="DimGray" />
+                <Setter Property="FontWeight" Value="Bold" />
+            </Style>
         </ResourceDictionary>
     </Window.Resources>
+        
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left">
-            <Button Click="BtnLoadSync_OnClick">Load Sync</Button>
-            <Button Click="BtnLoadAsync_EAP_OnClick">Load Async (EAP)</Button> 
-            <Button Click="BtnLoadAsync_TAP_OnClick">Load Async (TAP)</Button>
-            <Button Click="BtnLoadAsync_TAPPuppetTask_OnClick">Load Async (TAP Puppet)</Button>
-            <Button Click="BtnClear_OnClick">Clear</Button>
-        </StackPanel>
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Name="stackPanelFavicons"></StackPanel>
+        
+        <!-- EAP -->
+        <Border Grid.Row="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0">Play with WebClient EAP</Label>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Click="BtnLoadData_WebClient_Sync_OnClick">Sync</Button>
+                    <Button Click="BtnLoadData_WebClient_Async_EAP_OnClick">Async (EAP)</Button> 
+                    <Button Click="BtnLoadData_WebClient_Async_TAP_OnClick">Async (TAP)</Button>
+                    <Button Click="BtnLoadData_WebClient_Async_TAPPuppetTask_OnClick">Async (TAP over EAP)</Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- APM -->
+        <Border Grid.Row="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0">Play with WebRequest APM</Label>
+                <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Left">
+                    <Button Click="BtnLoadData_WebRequest_Sync_OnClick">Sync</Button>
+                    <Button Click="BtnLoadData_WebRequest_Async_APM_OnClick">Async (APM)</Button> 
+                    <Button Click="BtnLoadData_WebRequest_Async_TAP_OnClick">Async (TAP)</Button>
+                    <Button Click="BtnLoadData_WebRequest_Async_TAPPuppetTask_OnClick">Async (TAP over APM)</Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+        
+        <!-- Display -->
+        <Border Grid.Row="2">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0">Display</Label>
+                <StackPanel Name="containerImgs" Grid.Row="1" Orientation="Horizontal" />
+            </Grid>
+        </Border>
+        <Button Grid.Row="3" Click="BtnClearImages_OnClick" HorizontalAlignment="Right">Clear</Button>
     </Grid>
 </Window>

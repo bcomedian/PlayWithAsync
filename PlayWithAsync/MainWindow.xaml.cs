@@ -6,6 +6,8 @@ using System.Net;
 using System.Windows;
 using System.Windows.Media;
 using PlayWithAsync.Utils;
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
 
 namespace PlayWithAsync
 {
@@ -14,100 +16,127 @@ namespace PlayWithAsync
     /// </summary>
     public partial class MainWindow : Window
     {
-
-        private static readonly List<string> _faviconUrls = new List<string>
+        private static readonly List<string> _picUrls = new ()
         {
-            "http://www.google.com/favicon.ico",
-            "http://www.bing.com/favicon.ico",
-            "http://www.facebook.com/favicon.ico",
-            "http://www.apple.com/favicon.ico",
-            "https://www.cnn.com/favicon.ico",
-            "http://www.wikipedia.org/favicon.ico",
-            "http://www.youtube.com/favicon.ico",
-            "http://www.yahoo.com/favicon.ico",
-            "http://www.linkedin.com/favicon.ico",
-            "http://www.microsoft.com/favicon.ico"
+            "https://media.gettyimages.com/photos/entrance-to-uncompahgre-national-forest-colorado-circa-1962-picture-id168642438?s=2048x2048",
+            "https://media.gettyimages.com/photos/jackson-lake-snake-river-and-mount-moran-in-the-grand-teton-national-picture-id492841003?s=2048x2048",
+            "https://media.gettyimages.com/photos/35mm-film-photo-shows-an-automobile-making-its-way-down-an-empty-dirt-picture-id1315492753?s=2048x2048",
+            "https://media.gettyimages.com/photos/white-sands-national-monument-new-mexico-usa-circa-1960-picture-id532273617?s=2048x2048"
         };
-        
+
         public MainWindow()
         {
             InitializeComponent();
         }
 
-        private void BtnLoadSync_OnClick(object sender, RoutedEventArgs e)
+        private void BtnLoadData_WebClient_Sync_OnClick(object sender, RoutedEventArgs e)
         {
             WebClient webClient = new WebClient();
-            var dataFromServer = _faviconUrls.Select(url => webClient.DownloadData(url));
-            RenderFavicons(dataFromServer.ToList());
+            var dataFromServer = _picUrls.Select(url => webClient.DownloadData(url));
+            RenderImages(dataFromServer.ToList());
         }
 
-        private void BtnLoadAsync_EAP_OnClick(object sender, RoutedEventArgs e)
+        private void BtnLoadData_WebClient_Async_EAP_OnClick(object sender, RoutedEventArgs e)
         {
             var dataFromServer = new List<byte[]>();
-            AsyncDownload(0, dataFromServer);
+            AsyncDownloadData(0, dataFromServer);
         }
 
         /// <summary>
         /// Event based asynchronous calls need to be done as recursive calls. It's nasty.
         /// </summary>
-        private void AsyncDownload(int index, List<byte[]> result)
+        private void AsyncDownloadData(int index, List<byte[]> result)
         {
-            if (index == _faviconUrls.Count)
+            if (index == _picUrls.Count)
             {
-                RenderFavicons(result);
+                RenderImages(result);
                 return;
             }
 
-            WebClient webClient = new WebClient();
-            webClient.DownloadDataCompleted += (o, args) =>
+            var webClient = new WebClient();
+
+            DownloadDataCompletedEventHandler downloadDataCompletedHandler = null;
+            downloadDataCompletedHandler = (o, args) =>
             {
+                webClient.DownloadDataCompleted -= downloadDataCompletedHandler;
                 result.Add(args.Result);
-                AsyncDownload(++index, result);
+                AsyncDownloadData(++index, result);
             };
-            webClient.DownloadDataAsync(new Uri(_faviconUrls.ElementAt(index)));
+
+            webClient.DownloadDataCompleted += downloadDataCompletedHandler; 
+            webClient.DownloadDataAsync(new Uri(_picUrls.ElementAt(index)));
         }
 
-        private async void BtnLoadAsync_TAP_OnClick(object sender, RoutedEventArgs e)
+        private async void BtnLoadData_WebClient_Async_TAP_OnClick(object sender, RoutedEventArgs e)
         {
             var data = new List<byte[]>();
             
             var webClient = new WebClient();
-            foreach (var url in _faviconUrls)
+            foreach (var url in _picUrls)
             {
                 data.Add(await webClient.DownloadDataTaskAsync(url));
             }
-            RenderFavicons(data);
+            RenderImages(data);
         }
 
-        private async void BtnLoadAsync_TAPPuppetTask_OnClick(object sender, RoutedEventArgs e)
+        private async void BtnLoadData_WebClient_Async_TAPPuppetTask_OnClick(object sender, RoutedEventArgs e)
         {
             var dataFromServer = new List<byte[]>();
             
             var webClient = new WebClient();
-            foreach (var faviconUrl in _faviconUrls)
+            foreach (var faviconUrl in _picUrls)
             {
                 dataFromServer.Add(await webClient.DownloadDataPuppetTask(faviconUrl));
             }
-            RenderFavicons(dataFromServer);
+            RenderImages(dataFromServer);
         }
         
-        private void RenderFavicons(List<byte[]> faviconsData)
+        private void BtnLoadData_WebRequest_Sync_OnClick(object sender, RoutedEventArgs e)
+        { }
+
+        private void BtnLoadData_WebRequest_Async_APM_OnClick(object sender, RoutedEventArgs e)
+        { }
+
+        private async void BtnLoadData_WebRequest_Async_TAP_OnClick(object sender, RoutedEventArgs e)
+        { }
+
+        private async void BtnLoadData_WebRequest_Async_TAPPuppetTask_OnClick(object sender, RoutedEventArgs e)
+        { }
+        
+        private void RenderImages(List<byte[]> imgsData)
         {
-            stackPanelFavicons.Children.Clear();
-            foreach (var oneFaviconData in faviconsData)
+            ClearImages();
+            foreach (var oneImgData in imgsData)
             {
-                using (MemoryStream faviconByteStream = new MemoryStream(oneFaviconData))
+                var image = new BitmapImage();
+                using (MemoryStream imgByteStream = new MemoryStream(oneImgData))
                 {
-                    var imageControl = new System.Windows.Controls.Image();
-                    imageControl.Source = (ImageSource) new ImageSourceConverter().ConvertFrom(faviconByteStream);
-                    stackPanelFavicons.Children.Add(imageControl);
+                    image.BeginInit();
+                    image.CacheOption = BitmapCacheOption.OnLoad;
+                    image.StreamSource = imgByteStream;
+                    image.EndInit();
                 }
+                image.Freeze();
+
+                var imageControl = new Image
+                {
+                    Source = image,
+                    Width = 200,
+                    Height = 200,
+                    Stretch = Stretch.Uniform
+                };
+                containerImgs.Children.Add(imageControl);
             }
         }
         
-        private void BtnClear_OnClick(object sender, RoutedEventArgs e)
+        private void BtnClearImages_OnClick(object sender, RoutedEventArgs e)
         {
-            stackPanelFavicons.Children.Clear();
+            ClearImages();
+        }
+
+        private void ClearImages()
+        {
+            containerImgs.Children.Clear();
         }
     }
 }
