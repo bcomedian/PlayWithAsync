@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Net;
 using System.Threading.Tasks;
+using NLog;
 
 namespace PlayWithAsync.Utils
 {
     public static class WebClientExtensions
     {
+        private static readonly ILogger _logger = LogManager.GetCurrentClassLogger(); 
         /// <summary>
         /// Wrap event based asynchronous call with task based asynchronous call
         /// </summary>
@@ -22,10 +24,13 @@ namespace PlayWithAsync.Utils
                 
                 // setting result to 'promise'
                 taskPuppet.SetResult(args.Result);
+                
+                _logger.Debug("Web Client async TAP puppet. Finish");
             };
             
             try
             {
+                _logger.Debug("Web Client async TAP puppet. Start");
                 webClient.DownloadDataCompleted += callback;
                 webClient.DownloadDataAsync(new Uri(uri));
             }

@@ -8,6 +8,7 @@ using System.Windows.Media;
 using PlayWithAsync.Utils;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using NLog;
 
 namespace PlayWithAsync
 {
@@ -16,6 +17,8 @@ namespace PlayWithAsync
     /// </summary>
     public partial class MainWindow : Window
     {
+        private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
+        
         private List<byte[]> _apmImgData = new ();
         private static readonly List<string> _picUrls = new ()
         {
@@ -34,13 +37,16 @@ namespace PlayWithAsync
 
         private void BtnLoadData_WebClient_Sync_OnClick(object sender, RoutedEventArgs e)
         {
+            _logger.Debug("Web Client sync. Clicked");
             WebClient webClient = new WebClient();
             var dataFromServer = _picUrls.Select(url => webClient.DownloadData(url));
+            _logger.Debug("Web Client sync. Data received");
             RenderImages(dataFromServer.ToList());
         }
 
         private void BtnLoadData_WebClient_Async_EAP_OnClick(object sender, RoutedEventArgs e)
         {
+            _logger.Debug("Web Client async EAP. Clicked");
             var dataFromServer = new List<byte[]>();
             AsyncDownloadData(0, dataFromServer);
         }
@@ -63,15 +69,18 @@ namespace PlayWithAsync
             {
                 webClient.DownloadDataCompleted -= downloadDataCompletedHandler;
                 result.Add(args.Result);
+                _logger.Debug("Web Client async EAP. Finish");
                 AsyncDownloadData(++index, result);
             };
 
+            _logger.Debug("Web Client async EAP. Start");
             webClient.DownloadDataCompleted += downloadDataCompletedHandler; 
             webClient.DownloadDataAsync(new Uri(_picUrls.ElementAt(index)));
         }
 
         private async void BtnLoadData_WebClient_Async_TAP_OnClick(object sender, RoutedEventArgs e)
         {
+            _logger.Debug("Web Client async TAP. Clicked");
             var data = new List<byte[]>();
             
             var webClient = new WebClient();
@@ -79,11 +88,13 @@ namespace PlayWithAsync
             {
                 data.Add(await webClient.DownloadDataTaskAsync(url));
             }
+            _logger.Debug("Web Client async TAP. Received");
             RenderImages(data);
         }
 
         private async void BtnLoadData_WebClient_Async_TAPPuppetTask_OnClick(object sender, RoutedEventArgs e)
         {
+            _logger.Debug("Web Client async TAP puppet. Clicked");
             var dataFromServer = new List<byte[]>();
             
             var webClient = new WebClient();
@@ -96,6 +107,7 @@ namespace PlayWithAsync
 
         private void BtnLoadData_WebRequest_Sync_OnClick(object sender, RoutedEventArgs e)
         {
+            _logger.Debug("Web Request sync. Clicked");
             var imgData = new List<byte[]>(); 
             foreach (var url in _picUrls)
             {
@@ -104,13 +116,16 @@ namespace PlayWithAsync
                 using var binaryReader = new BinaryReader(response.GetResponseStream());
                 imgData.Add(binaryReader.ReadBytes((int) response.ContentLength));
             }
+            _logger.Debug("Web Request sync. Received");
             RenderImages(imgData);
         }
 
         private void BtnLoadData_WebRequest_Async_APM_OnClick(object sender, RoutedEventArgs e)
         {
+            _logger.Debug("Web Request async APM. Clicked");
             foreach (var picUrl in _picUrls)
             {
+                _logger.Debug("Web Request async APM. Start");
                 var req = (HttpWebRequest) WebRequest.Create(new Uri(picUrl));
                 req.BeginGetResponse(ProcessEndResponse, req);
             }
@@ -131,6 +146,7 @@ namespace PlayWithAsync
             {
                 _apmImgData.Add(data);
             }
+            _logger.Debug("Web Request async APM. Finish");
         }
 
         private async void BtnLoadData_WebRequest_Async_TAP_OnClick(object sender, RoutedEventArgs e)
