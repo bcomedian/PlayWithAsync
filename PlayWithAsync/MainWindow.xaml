@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PlayWithAsync"
         mc:Ignorable="d"
-        Title="MainWindow" Height="480" Width="850">
+        Title="MainWindow" Height="500" Width="850">
     <Window.Resources>
         <ResourceDictionary>
             <Style TargetType="Button">
@@ -88,7 +88,9 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
                 <Label Grid.Row="0">Display</Label>
-                <StackPanel Name="containerImgs" Grid.Row="1" Orientation="Horizontal" />
+                <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Hidden">
+                    <StackPanel Name="containerImgs" Orientation="Horizontal" />
+                </ScrollViewer>
             </Grid>
         </Border>
         <Button Grid.Row="3" Click="BtnClearImages_OnClick" HorizontalAlignment="Right">Clear</Button>
