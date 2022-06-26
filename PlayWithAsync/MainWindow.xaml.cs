@@ -8,7 +8,9 @@ using System.Windows.Media;
 using PlayWithAsync.Utils;
 using System.Windows.Controls;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using NLog;
+using PlayWithAsync.Models;
 
 namespace PlayWithAsync
 {
@@ -18,8 +20,7 @@ namespace PlayWithAsync
     public partial class MainWindow : Window
     {
         private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-        
-        private List<byte[]> _apmImgData = new ();
+
         private static readonly List<string> _picUrls = new ()
         {
             "https://media.gettyimages.com/photos/entrance-to-uncompahgre-national-forest-colorado-circa-1962-picture-id168642438?s=2048x2048",
@@ -123,30 +124,39 @@ namespace PlayWithAsync
         private void BtnLoadData_WebRequest_Async_APM_OnClick(object sender, RoutedEventArgs e)
         {
             _logger.Debug("Web Request async APM. Clicked");
+            var asyncRequestsAndStates = new Dictionary<Uri, WebRequestAsyncState>();
             foreach (var picUrl in _picUrls)
             {
-                _logger.Debug("Web Request async APM. Start");
-                var req = (HttpWebRequest) WebRequest.Create(new Uri(picUrl));
-                req.BeginGetResponse(ProcessEndResponse, req);
-            }
+                var uri = new Uri(picUrl);
+                asyncRequestsAndStates.Add(uri, new WebRequestAsyncState { Completed = false, Data = new List<byte>() });
 
-            while (_apmImgData.Count != _picUrls.Count)
-            { }
-            
-            RenderImages(_apmImgData);
+                var req = (HttpWebRequest) WebRequest.Create(uri);
+                req.BeginGetResponse(ProcessResponse, (req, asyncRequestsAndStates));
+                
+                _logger.Debug("Web Request async APM. One started");
+            }
         }
 
-        private void ProcessEndResponse(IAsyncResult ar)
+        private void ProcessResponse(IAsyncResult ar)
         {
-            var req = (HttpWebRequest) ar.AsyncState;
-            var response = (HttpWebResponse) req.EndGetResponse(ar);
-            using var binaryReader = new BinaryReader(response.GetResponseStream());
-            var data = binaryReader.ReadBytes((int)response.ContentLength);
-            lock (_apmImgData)
+            var (req, state) = ((HttpWebRequest, Dictionary<Uri, WebRequestAsyncState>)) ar.AsyncState;
+            
+            var webResponse = (HttpWebResponse) req.EndGetResponse(ar);
+            using var binaryReader = new BinaryReader(webResponse.GetResponseStream());
+            var data = binaryReader.ReadBytes((int) webResponse.ContentLength);
+
+            state[req.RequestUri].Data = data.ToList();
+            state[req.RequestUri].Completed = true;
+            _logger.Debug("Web Request async APM. One finished");
+
+            // all finished
+            if (state.Values.All(x => x.Completed))
             {
-                _apmImgData.Add(data);
+                _logger.Debug("Web Request async APM. All finished");
+                Dispatcher.BeginInvoke(
+                    () => RenderImages(state.Select(x => x.Value.Data.ToArray()).ToList()),
+                    DispatcherPriority.Render);
             }
-            _logger.Debug("Web Request async APM. Finish");
         }
 
         private async void BtnLoadData_WebRequest_Async_TAP_OnClick(object sender, RoutedEventArgs e)
@@ -157,6 +167,7 @@ namespace PlayWithAsync
         
         private void RenderImages(List<byte[]> imgsData)
         {
+            _logger.Debug("Render Images called.");
             ClearImages();
             foreach (var oneImgData in imgsData)
             {
