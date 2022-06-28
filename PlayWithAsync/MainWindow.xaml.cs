@@ -143,7 +143,7 @@ namespace PlayWithAsync
             var (req, state) = ((HttpWebRequest, Dictionary<Uri, WebRequestAsyncState>)) ar.AsyncState;
             
             var webResponse = (HttpWebResponse) req.EndGetResponse(ar);
-            var data = GetDataFromWebResponse(webResponse);
+            var data = webResponse.GetBinaryData();
 
             state[req.RequestUri].Data = data.ToList();
             state[req.RequestUri].Completed = true;
@@ -166,13 +166,24 @@ namespace PlayWithAsync
                 .ToList();
             await Task.WhenAll(responsesTasks);
             var data = responsesTasks
-                .Select(x => GetDataFromWebResponse((HttpWebResponse)x.Result))
+                .Select(x => ((HttpWebResponse)x.Result).GetBinaryData())
                 .ToList();
             RenderImages(data);
         }
 
         private async void BtnLoadData_WebRequest_Async_TAPPuppetTask_OnClick(object sender, RoutedEventArgs e)
-        { }
+        {
+            var requests = new List<Task<byte[]>>();
+            foreach (var picUrl in _picUrls)
+            {
+                var webRequest = (HttpWebRequest) WebRequest.Create(picUrl);
+                requests.Add(webRequest.DownloadDataPuppetTask());
+            }
+
+            await Task.WhenAll(requests);
+            
+            RenderImages(requests.Select(x => x.Result).ToList());
+        }
         
         private void RenderImages(List<byte[]> imgsData)
         {
@@ -199,12 +210,6 @@ namespace PlayWithAsync
                 };
                 containerImgs.Children.Add(imageControl);
             }
-        }
-        
-        private byte[] GetDataFromWebResponse(HttpWebResponse response)
-        {
-            using var binaryReader = new BinaryReader(response.GetResponseStream());
-            return binaryReader.ReadBytes((int) response.ContentLength);
         }
         
         private void BtnClearImages_OnClick(object sender, RoutedEventArgs e)
