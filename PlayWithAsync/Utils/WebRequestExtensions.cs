@@ -11,9 +11,10 @@ namespace PlayWithAsync.Utils
         private static readonly ILogger _logger = LogManager.GetCurrentClassLogger();
         
         /// <summary>
-        /// Wrap APM asynchronous call with TAP asynchronous call
+        /// Wrap APM asynchronous call with TAP asynchronous call,
+        /// this wrap was made naively, consider using Task.Factory.FromAsync()
         /// </summary>
-        public static Task<byte[]> DownloadDataPuppetTask(this HttpWebRequest webRequest)
+        public static Task<byte[]> DownloadDataUsingNaivePuppetTaskAsync(this HttpWebRequest webRequest)
         {
             var taskPuppet = new TaskCompletionSource<byte[]>();
 
@@ -37,6 +38,22 @@ namespace PlayWithAsync.Utils
             }
             
             return taskPuppet.Task;
+        }
+        
+        /// <summary>
+        /// Wrap APM asynchronous call with TAP asynchronous call using .NET utility Factory.FromAsync
+        /// </summary>
+        public static Task<byte[]> DownloadDataUsingPuppetTaskAsync(this HttpWebRequest webRequest)
+        {
+            var task = Task<WebResponse>.Factory
+                .FromAsync(
+                    webRequest.BeginGetResponse,
+                    webRequest.EndGetResponse, null);
+            return task.ContinueWith(result =>
+            {
+                var webResponse = (HttpWebResponse) result.Result;
+                return webResponse.GetBinaryData();
+            });
         }
 
         /// <summary>

@@ -102,7 +102,7 @@ namespace PlayWithAsync
             var webClient = new WebClient();
             foreach (var faviconUrl in _picUrls)
             {
-                dataFromServer.Add(await webClient.DownloadDataPuppetTask(faviconUrl));
+                dataFromServer.Add(await webClient.DownloadDataUsingPuppetTaskAsync(faviconUrl));
             }
             RenderImages(dataFromServer);
         }
@@ -177,7 +177,7 @@ namespace PlayWithAsync
             foreach (var picUrl in _picUrls)
             {
                 var webRequest = (HttpWebRequest) WebRequest.Create(picUrl);
-                requests.Add(webRequest.DownloadDataPuppetTask());
+                requests.Add(webRequest.DownloadDataUsingPuppetTaskAsync());
             }
 
             await Task.WhenAll(requests);

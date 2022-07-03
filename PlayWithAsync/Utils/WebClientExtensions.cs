@@ -8,10 +8,11 @@ namespace PlayWithAsync.Utils
     public static class WebClientExtensions
     {
         private static readonly ILogger _logger = LogManager.GetCurrentClassLogger(); 
+        
         /// <summary>
         /// Wrap event based asynchronous call with task based asynchronous call
         /// </summary>
-        public static Task<byte[]> DownloadDataPuppetTask(this WebClient webClient, string uri)
+        public static Task<byte[]> DownloadDataUsingPuppetTaskAsync(this WebClient webClient, string uri)
         {
             var taskPuppet = new TaskCompletionSource<byte[]>();
             
